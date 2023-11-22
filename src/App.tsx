@@ -9,28 +9,6 @@ function App() {
 
   const randomNumber = Math.ceil(Math.random() * 10);
 
-  // el useCallback revisa lo que tine en memoria antes de renderizar
-  const reference = useCallback((container: HTMLDivElement | null) => {
-    if (!container) return;
-    container.append(generateAxes().node());
-  }, []);
-
-  const handleClick = () => {
-    setBars((prev) => [...prev, randomNumber]);
-  };
-
-  const handleRemove = (indexNumber: number) => {
-    setBars((prev) => prev.filter((_, idx) => idx !== indexNumber));
-  };
-  const handleUpdate = (indexNumber: number) => {
-    setBars((prev) => {
-      const newBars = prev.map((cur, idx) => {
-        return idx === indexNumber ? randomNumber : cur;
-      });
-      return newBars;
-    });
-  };
-
   const generateAxes = () => {
     const width = 640;
     const height = 400;
@@ -38,7 +16,6 @@ function App() {
     const marginRight = 20;
     const marginBottom = 30;
     const marginLeft = 40;
-    // const barWidth = 15
 
     const x = d3
       .scaleUtc()
@@ -62,22 +39,112 @@ function App() {
       .attr("transform", `translate(${marginLeft},0)`)
       .call(d3.axisLeft(y));
 
-    // svg
-    //   .selectAll("rect")
-    //   .data(bars)
-    //   .enter()
-    //   .append("rect")
-    //   .atrr("fill", "crimsom")
-    //   .atrr("stroke", "yellow");
-    // .atrr("x"function(d,i){return i*(barWidth+1)}).atrr('y',function(d) {return height - (x(d))}).atrr('width', barWidth).atrr('height', x);
-
     return svg;
+  };
+
+  const drawBarChart = (data: number[], root: SVGGElement) => {
+    const barsElement = d3.select(root).selectAll("rect").data(data);
+    console.log({ root });
+    // Acciones para los nuevos datos (enter)
+    barsElement
+      .join("rect")
+      .attr("x", function (_: number, i: number) {
+        return i * 80;
+      })
+      .attr("y", function (d: number) {
+        return 200 - d * 5;
+      })
+      .attr("width", 70)
+      .attr("height", function (d: number) {
+        return d * 5;
+      })
+      .attr("fill", "blue");
+
+    // function (enter) {
+    //   enter()
+    //     .append("rect")
+    //     .attr("x", function (d: number, i: number) {
+    //       return i * 80;
+    //     })
+    //     .attr("y", function (d: number) {
+    //       return 200 - d * 5;
+    //     })
+    //     .attr("width", 70)
+    //     .attr("height", function (d: number) {
+    //       return d * 5;
+    //     })
+    //     .attr("fill", "blue");
+    // },
+    // function (update) {
+    //   update()
+    //     .append("rect")
+    //     .attr("x", function (d: number, i: number) {
+    //       return i * 80;
+    //     })
+    //     .attr("y", function (d: number) {
+    //       return 200 - d * 5;
+    //     })
+    //     .attr("width", 70)
+    //     .attr("height", function (d: number) {
+    //       return d * 5;
+    //     })
+    //     .attr("fill", "blue");
+    // },
+    // function (exit) {
+    //   exit().remove();
+    // }
+
+    // Acciones para los datos existentes (update)
+    // barsElement.attr("y", function(d:number) { return 200 - d * 5; })
+    //   .attr("height", function(d:number) { return d * 5; });
+
+    // Acciones para los datos que salen (exit)
+    // barsElement.exit().remove();
+  };
+
+  // el useCallback revisa lo que tine en memoria antes de renderizar
+  const axesRef = useCallback((container: SVGGElement | null) => {
+    if (!container) return;
+    container.append(generateAxes().node());
+  }, []);
+
+  const barChartRef = useCallback(
+    (container: SVGGElement) => {
+      // if (!container) return
+      drawBarChart(bars, container);
+    },
+    [bars]
+  );
+
+  const handleClick = () => {
+    setBars((prev) => [...prev, randomNumber]);
+  };
+
+  const handleRemove = (indexNumber: number) => {
+    setBars((prev) => prev.filter((_, idx) => idx !== indexNumber));
+  };
+
+  const handleUpdate = (indexNumber: number) => {
+    setBars((prev) => {
+      const newBars = prev.map((cur, idx) => {
+        return idx === indexNumber ? randomNumber : cur;
+      });
+      return newBars;
+    });
   };
 
   return (
     <>
-      <div>hello</div>
-      <div ref={reference}></div>
+      <h1>Learning d3</h1>
+      <g>
+        <svg ref={axesRef} />
+        <svg
+          ref={barChartRef}
+          width="800px"
+          height="500px"
+          style={{ background: "whiteSmoke" }}
+        />
+      </g>
       <div style={{ display: "flex", gap: "5px" }}>
         {bars.map((cur, idx) => (
           <div
